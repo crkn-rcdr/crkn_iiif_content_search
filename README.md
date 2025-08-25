@@ -32,6 +32,50 @@ Start the development server
 
 Configuration is handled through the [RailsConfig](/railsconfig/config) `settings.yml` files.
 
+
+# Configuration
+
+This repo is configured to pull and run solr through docker compose, and has the data folder mapped as a volume, which will allow the solr index to be created automatically for you, and will persist the information in the index for development or production needs.
+
+For CRKN in production, we are using a solr instance running independantly from this docker compose. To configure the Solr instance to work with the Blacklight container, I sshed onto the Solr server, and performed the following:
+
+Connect to the solr vm:
+
+`ssh -i ~/.ssh/<id file>.pem <user>@4.204.49.142`
+
+Created the content_search core config directory:
+`sudo mkdir /opt/bitnami/solr/server/solr/content_search/`
+`sudo mkdir /opt/bitnami/solr/server/solr/content_search/conf`
+
+Copied the default configs to my new core:
+
+`sudo cp -r /opt/bitnami/solr/server/solr/configsets/_default/conf/* /opt/bitnami/solr/server/solr/content_search/conf/`
+
+Went into the new core's config directory:
+
+`cd /opt/bitnami/solr/server/solr/content_search/conf/`
+
+Removed the default solr config:
+
+`sudo rm solrconfig.xml`
+
+Pasted the solrconfig from this repo into a new solrconfig file:
+
+`sudo vi solrconfig.xml`
+
+Removed the default solr schema:
+
+`sudo rm managed-schema.xml`
+
+Pasted the solr schema from this repo into a new solr schema file:
+
+`sudo vi managed-schema.xml`
+
+Restarted solr to apply the changes:
+
+`sudo /opt/bitnami/ctlscript.sh restart solr`
+
+
 #### Local Configuration
 
 The defaults in `config/settings.yml` should work on a locally run installation.
@@ -60,13 +104,6 @@ $ bundle exec solr_wrapper
 
 ## Indexing content
 
-Content can be indexed from the Rails console:
-
-```
-> druid = 'bb034nj7139' # e.g.
-> IndexFullTextContentJob.perform_now(druid)
-```
-You may need to commit this separately
 
 ```ruby
 > Search.client.commit

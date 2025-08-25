@@ -92,10 +92,10 @@ class IiifContentSearchResponse
 
   # Transform individual search highlights into IIIF resource annotations
   class Resource
-    attr_reader :druid, :resource_id, :filename, :highlight, :pre_match, :post_match
+    attr_reader :manifestid, :canvasid, :highlight, :pre_match, :post_match
 
     def initialize(id, highlight)
-      @druid, @resource_id, @filename = id.split('/')
+      @manifestid, @canvasid = id.split("|", 2)
       @highlight = strip_em highlight.to_s
       @pre_match = strip_em highlight.pre_match
       @post_match = strip_em highlight.post_match
@@ -157,7 +157,7 @@ class IiifContentSearchResponse
     end
 
     def canvas_url
-      format(Settings.purl.canvas_url, druid: druid, resource: resource_id)
+      "#{Settings.iiif.canvas_url}/#{@canvasid}"
     end
 
     def tokenized_text(text)

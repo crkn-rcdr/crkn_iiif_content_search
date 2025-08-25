@@ -1,25 +1,12 @@
 iiif:
   ignored_request_params: [motivation, date, user]
-
-maximum_ocr_filesize_to_consider: 10000000 # 10MB
-
-purl:
-  canvas_url: 'https://purl.stanford.edu/%{druid}/iiif/canvas/%{resource}'
-  public_xml_url: 'https://purl.stanford.edu/%{druid}.xml'
-
-stacks:
-  host: 'https://stacks.stanford.edu'
-  file_url: 'https://stacks.stanford.edu/file/%{druid}/%{filename}'
+  canvas_url: 'https://crkn-iiif-api.azurewebsites.net/canvas'
 
 solr:
-  url: 'http://127.0.0.1:8983/solr/content_search/'
+  url: 'http://public:hdwi389e8d!ds@4.204.49.142/solr/content_search'
   highlight_path: 'select'
   highlight_params:
     fl: 'id'
   suggest_path: 'suggest'
   suggest_params:
     'suggest.count': 1000
-
-kafka:
-  topic: testing_topic # Can be purl_fetcher_stage or purl_fetcher_prod
-  group_id: content-search

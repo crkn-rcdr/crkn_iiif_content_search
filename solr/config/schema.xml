@@ -11,9 +11,9 @@
     <field name="_version_" type="long"     indexed="true"  stored="true"/>
     <field name="timestamp" type="date" indexed="true" stored="true" default="NOW" multiValued="false"/>
 
-    <field name="druid" type="string" stored="true" indexed="true" multiValued="false"/>
+    <field name="manifestid" type="string" stored="true" indexed="true" multiValued="false"/>
     <field name="published" type="string" stored="true" indexed="true" multiValued="false"/>
-    <field name="resource_id" type="string" stored="true" indexed="true" multiValued="false"/>
+    <field name="canvas_id" type="string" stored="true" indexed="true" multiValued="false"/>
     <field name="filename" type="string" stored="true" indexed="true" multiValued="false"/>
     <field name="ocrtext" type="text_with_delimited_ocr_position" stored="true" indexed="true" multiValued="true" storeOffsetsWithPositions="true" termVectors="true" />
     <field name="ocrtext_en" type="text_en_with_delimited_ocr_position" stored="true" indexed="true" multiValued="true" storeOffsetsWithPositions="true" termVectors="true" />

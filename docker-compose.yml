@@ -1,0 +1,16 @@
+version: '3'
+services:
+  iiif_search:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - RAILS_ENV=development
+    volumes:
+      - ./bin:/app/bin
+      - ./app:/app/app
+      - ./db:/app/db
+      - ./config:/app/config
+      - ./public:/app/public
