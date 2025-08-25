@@ -1,6 +1,5 @@
 # frozen_string_literal: true
-
-class SearchController < ApplicationController # :nodoc:
+class SearchController < ApplicationController
   before_action :load_search, except: [:home]
 
   def home
@@ -15,11 +14,13 @@ class SearchController < ApplicationController # :nodoc:
   private
 
   def load_search
-    @search = Search.new(search_params[:id], **search_params.slice(:q, :start).to_h.symbolize_keys)
+    # Pass canvas param if present
+    opts = search_params.slice(:q, :start, :canvas).to_h.symbolize_keys
+    @search = Search.new(search_params[:id], **opts)
   end
 
   def search_params
     params.require(:q)
-    params.permit(:id, :q, :start)
+    params.permit(:id, :q, :start, :canvas)
   end
 end
