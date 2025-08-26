@@ -46,14 +46,12 @@
           id
           ocrtext
           ocrtext_en
-          ocrtext_pt
-          ocrtext_id
+          ocrtext_zh_hant
         </str>
         <str name="pf">
           ocrtext^10
           ocrtext_en^5
-          ocrtext_pt^5
-          ocrtext_id^5
+          ocrtext_zh_hant^5
         </str>
 
        <str name="fl">
@@ -63,7 +61,7 @@
 
        <str name="hl">true</str>
        <int name="hl.snippets">10</int>
-       <str name="hl.fl">ocrtext_en ocrtext_id ocrtext_pt</str>
+       <str name="hl.fl">ocrtext_en ocrtext_zh_hant</str>
        <str name="hl.method">unified</str>
      </lst>
   </requestHandler>

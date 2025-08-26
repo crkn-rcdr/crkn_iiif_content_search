@@ -17,13 +17,17 @@
     <field name="filename" type="string" stored="true" indexed="true" multiValued="false"/>
     <field name="ocrtext" type="text_with_delimited_ocr_position" stored="true" indexed="true" multiValued="true" storeOffsetsWithPositions="true" termVectors="true" />
     <field name="ocrtext_en" type="text_en_with_delimited_ocr_position" stored="true" indexed="true" multiValued="true" storeOffsetsWithPositions="true" termVectors="true" />
-    <field name="ocrtext_pt" type="text_pt_with_delimited_ocr_position" stored="true" indexed="true" multiValued="true" storeOffsetsWithPositions="true" termVectors="true" />
-    <field name="ocrtext_id" type="text_id_with_delimited_ocr_position" stored="true" indexed="true" multiValued="true" storeOffsetsWithPositions="true" termVectors="true" />
+    <field name="ocrtext_zh_hant" 
+       type="text_zh_hant_with_delimited_ocr_position" 
+       stored="true" 
+       indexed="true" 
+       multiValued="true" 
+       storeOffsetsWithPositions="true" 
+       termVectors="true" />
   </fields>
 
   <copyField source="ocrtext" dest="ocrtext_en"/>
-  <copyField source="ocrtext" dest="ocrtext_pt"/>
-  <copyField source="ocrtext" dest="ocrtext_id"/>
+  <copyField source="ocrtext" dest="ocrtext_zh_hant"/>
 
   <!-- Above, multiple source fields are copied to the [text] field.
       Another way to map multiple source fields to the same
@@ -84,46 +88,32 @@
       </analyzer>
     </fieldType>
 
-    <fieldType name="text_pt_with_delimited_ocr_position" class="solr.TextField" positionIncrementGap="100">
+    <fieldType name="text_zh_hant_with_delimited_ocr_position" class="solr.TextField" positionIncrementGap="100">
       <analyzer type="index">
+        <!-- Tokenizer: handles whitespace, then payloads -->
         <tokenizer class="solr.WhitespaceTokenizerFactory" />
+        <!-- Attach OCR positions from ☞ delimiter -->
         <filter class="solr.DelimitedPayloadTokenFilterFactory" encoder="identity" delimiter="☞" />
-        <filter class="solr.ICUFoldingFilterFactory"/>  <!-- NFKC, case folding, diacritics removed -->
-        <filter class="solr.WordDelimiterGraphFilterFactory"/>
-        <filter class="solr.PortugueseLightStemFilterFactory"/>
+        <!-- ICU folding: normalize width, case, diacritics, keep Traditional Chinese distinct -->
+        <filter class="solr.ICUFoldingFilterFactory" />
+        <!-- Optional: ICU Transform to normalize variants (e.g. traditional vs simplified forms) -->
+        <filter class="solr.ICUTransformFilterFactory" id="Any-Hant" /> 
+        <!-- Word segmentation for Chinese -->
+        <filter class="solr.CJKBigramFilterFactory" />
         <filter class="solr.TrimFilterFactory"/>
         <filter class="solr.HyphenatedWordsFilterFactory"/>
         <filter class="solr.FlattenGraphFilterFactory"/>
       </analyzer>
+
       <analyzer type="query">
         <tokenizer class="solr.WhitespaceTokenizerFactory" />
         <filter class="solr.DelimitedPayloadTokenFilterFactory" encoder="identity" delimiter="☞" />
-        <filter class="solr.ICUFoldingFilterFactory"/>  <!-- NFKC, case folding, diacritics removed -->
-        <filter class="solr.WordDelimiterGraphFilterFactory"/>
-        <filter class="solr.PortugueseLightStemFilterFactory"/>
+        <filter class="solr.ICUFoldingFilterFactory" />
+        <filter class="solr.ICUTransformFilterFactory" id="Any-Hant" />
+        <filter class="solr.CJKBigramFilterFactory" />
         <filter class="solr.TrimFilterFactory"/>
       </analyzer>
     </fieldType>
 
-    <fieldType name="text_id_with_delimited_ocr_position" class="solr.TextField" positionIncrementGap="100">
-      <analyzer type="index">
-        <tokenizer class="solr.WhitespaceTokenizerFactory" />
-        <filter class="solr.DelimitedPayloadTokenFilterFactory" encoder="identity" delimiter="☞" />
-        <filter class="solr.ICUFoldingFilterFactory"/>  <!-- NFKC, case folding, diacritics removed -->
-        <filter class="solr.WordDelimiterGraphFilterFactory"/>
-        <filter class="solr.IndonesianStemFilterFactory" stemDerivational="true" />
-        <filter class="solr.TrimFilterFactory"/>
-        <filter class="solr.HyphenatedWordsFilterFactory"/>
-        <filter class="solr.FlattenGraphFilterFactory"/>
-      </analyzer>
-      <analyzer type="query">
-        <tokenizer class="solr.WhitespaceTokenizerFactory" />
-        <filter class="solr.DelimitedPayloadTokenFilterFactory" encoder="identity" delimiter="☞" />
-        <filter class="solr.ICUFoldingFilterFactory"/>  <!-- NFKC, case folding, diacritics removed -->
-        <filter class="solr.WordDelimiterGraphFilterFactory"/>
-        <filter class="solr.IndonesianStemFilterFactory" stemDerivational="true" />
-        <filter class="solr.TrimFilterFactory"/>
-      </analyzer>
-    </fieldType>
   </types>
 </schema>
