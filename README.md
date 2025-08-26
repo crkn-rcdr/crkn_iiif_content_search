@@ -84,31 +84,16 @@ A quick command to clear the solr index is:
 
 The defaults in `config/settings.yml` should work on a locally run installation.
 
-## Testing
+# Developing Locally
+Ensure docker and docker compose are installed. Then, enter the directory in your terminal, and run:
 
-The test suite (with RuboCop style enforcement) will be run with the default rake task (also run on travis)
+`docker compose up --build --force-recreate -d`
 
-    $ bundle exec rake
+# Deployment Instructions
+Run the following to push the image to docker hub:
 
-The specs can be run without RuboCop style enforcement
+`docker tag crkn_iiif_content_search-iiif_search brilap/crkn-search`
 
-    $ bundle exec rspec
+`docker push brilap/crkn-search`
 
-The RuboCop style enforcement can be run without running the tests
-
-    $ bundle exec rubocop
-
-## Running Solr
-
-In a new terminal window:
-
-```bash
-$ bundle exec solr_wrapper
-```
-
-## Indexing content
-
-
-```ruby
-> Search.client.commit
-```
+Then restart the web app on [Azure](https://portal.azure.com/#@crkn.ca/resource/subscriptions/1bf1b056-be1d-4b1c-991f-2f154caf3061/resourcegroups/CRKN-demo-test/providers/Microsoft.Web/sites/crkn-iiif-content-search/appServices) to pull the new docker image.
