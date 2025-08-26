@@ -76,6 +76,10 @@ Restarted solr to apply the changes:
 `sudo /opt/bitnami/ctlscript.sh restart solr`
 
 
+A quick command to clear the solr index is:
+
+`curl -X POST -H 'Content-Type: application/json' 'http://username:password@host/solr/content_search/update?commit=true' -d '{ "delete": {"query":"*:*"} }'`
+
 #### Local Configuration
 
 The defaults in `config/settings.yml` should work on a locally run installation.
