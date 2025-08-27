@@ -53,7 +53,6 @@ end
 gem 'tzinfo-data', platforms: %i[windows jruby]
 
 gem 'config'
-gem 'honeybadger'
 gem 'http'
 gem 'newrelic_rpm', group: :production
 gem 'nokogiri'

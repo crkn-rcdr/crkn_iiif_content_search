@@ -1,8 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schema name="IiifContentSearch" version="1.5">
-  <!-- NOTE: various comments and unused configuration possibilities have been purged
-     from this file.  Please refer to http://wiki.apache.org/solr/SchemaXml,
-     as well as the default schema file included with Solr -->
 
   <uniqueKey>id</uniqueKey>
 
@@ -24,22 +21,18 @@
        multiValued="true" 
        storeOffsetsWithPositions="true" 
        termVectors="true" />
+    
+    <!-- New canvas index field -->
+    <field name="canvas_index" type="int" stored="true" indexed="true" multiValued="false"/>
   </fields>
 
   <copyField source="ocrtext" dest="ocrtext_en"/>
   <copyField source="ocrtext" dest="ocrtext_zh_hant"/>
 
-  <!-- Above, multiple source fields are copied to the [text] field.
-      Another way to map multiple source fields to the same
-      destination field is to use the dynamic field syntax.
-      copyField also supports a maxChars to copy setting.  -->
-
   <types>
     <fieldType name="string" class="solr.StrField" sortMissingLast="true" />
     <fieldType name="boolean" class="solr.BoolField" sortMissingLast="true"/>
     <fieldType name="rand" class="solr.RandomSortField" omitNorms="true"/>
-
-    <!-- Default numeric field types.  -->
     <fieldType name="int" class="solr.TrieIntField" precisionStep="0" positionIncrementGap="0"/>
     <fieldType name="float" class="solr.TrieFloatField" precisionStep="0" positionIncrementGap="0"/>
     <fieldType name="long" class="solr.TrieLongField" precisionStep="0" positionIncrementGap="0"/>
@@ -50,7 +43,7 @@
       <analyzer type="index">
         <tokenizer class="solr.WhitespaceTokenizerFactory" />
         <filter class="solr.DelimitedPayloadTokenFilterFactory" encoder="identity" delimiter="☞" />
-        <filter class="solr.ICUFoldingFilterFactory"/>  <!-- NFKC, case folding, diacritics removed -->
+        <filter class="solr.ICUFoldingFilterFactory"/>
         <filter class="solr.WordDelimiterGraphFilterFactory"/>
         <filter class="solr.TrimFilterFactory"/>
         <filter class="solr.HyphenatedWordsFilterFactory"/>
@@ -59,7 +52,7 @@
       <analyzer type="query">
         <tokenizer class="solr.WhitespaceTokenizerFactory" />
         <filter class="solr.DelimitedPayloadTokenFilterFactory" encoder="identity" delimiter="☞" />
-        <filter class="solr.ICUFoldingFilterFactory"/>  <!-- NFKC, case folding, diacritics removed -->
+        <filter class="solr.ICUFoldingFilterFactory"/>
         <filter class="solr.WordDelimiterGraphFilterFactory"/>
         <filter class="solr.TrimFilterFactory"/>
       </analyzer>
@@ -69,7 +62,7 @@
       <analyzer type="index">
         <tokenizer class="solr.WhitespaceTokenizerFactory" />
         <filter class="solr.DelimitedPayloadTokenFilterFactory" encoder="identity" delimiter="☞" />
-        <filter class="solr.ICUFoldingFilterFactory"/>  <!-- NFKC, case folding, diacritics removed -->
+        <filter class="solr.ICUFoldingFilterFactory"/>
         <filter class="solr.WordDelimiterGraphFilterFactory"/>
         <filter class="solr.EnglishPossessiveFilterFactory"/>
         <filter class="solr.EnglishMinimalStemFilterFactory"/>
@@ -80,7 +73,7 @@
       <analyzer type="query">
         <tokenizer class="solr.WhitespaceTokenizerFactory" />
         <filter class="solr.DelimitedPayloadTokenFilterFactory" encoder="identity" delimiter="☞" />
-        <filter class="solr.ICUFoldingFilterFactory"/>  <!-- NFKC, case folding, diacritics removed -->
+        <filter class="solr.ICUFoldingFilterFactory"/>
         <filter class="solr.WordDelimiterGraphFilterFactory"/>
         <filter class="solr.EnglishPossessiveFilterFactory"/>
         <filter class="solr.EnglishMinimalStemFilterFactory"/>
@@ -90,15 +83,10 @@
 
     <fieldType name="text_zh_hant_with_delimited_ocr_position" class="solr.TextField" positionIncrementGap="100">
       <analyzer type="index">
-        <!-- Tokenizer: handles whitespace, then payloads -->
         <tokenizer class="solr.WhitespaceTokenizerFactory" />
-        <!-- Attach OCR positions from ☞ delimiter -->
         <filter class="solr.DelimitedPayloadTokenFilterFactory" encoder="identity" delimiter="☞" />
-        <!-- ICU folding: normalize width, case, diacritics, keep Traditional Chinese distinct -->
         <filter class="solr.ICUFoldingFilterFactory" />
-        <!-- Optional: ICU Transform to normalize variants (e.g. traditional vs simplified forms) -->
         <filter class="solr.ICUTransformFilterFactory" id="Any-Hant" /> 
-        <!-- Word segmentation for Chinese -->
         <filter class="solr.CJKBigramFilterFactory" />
         <filter class="solr.TrimFilterFactory"/>
         <filter class="solr.HyphenatedWordsFilterFactory"/>

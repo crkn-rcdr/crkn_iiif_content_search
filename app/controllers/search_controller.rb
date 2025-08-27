@@ -15,7 +15,9 @@ class SearchController < ApplicationController
 
   def load_search
     opts = params.permit(:q, :start, :canvas, :id).to_h.symbolize_keys
-    id = opts.delete(:id)
-    @search = Search.new(id, **opts)
+    raw_id = opts.delete(:id)
+    # Normalize manifest id: take last two path segments if full URL
+    manifest_id = raw_id.to_s.split('/').last(2).join('/')
+    @search = Search.new(manifest_id, **opts)
   end
 end

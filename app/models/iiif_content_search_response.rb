@@ -1,16 +1,9 @@
 # frozen_string_literal: true
-
-# Transforming search highlighting results into IIIF Content Search API v2 responses with pagination
 class IiifContentSearchResponse
   attr_reader :search, :controller
 
   delegate :request, to: :controller
 
-  # `search` should respond to:
-  #   .highlights => { "manifestid|canvasid" => ["<em>match</em>", ...] }
-  #   .start => integer offset
-  #   .rows => page size
-  #   .num_found => total hits
   def initialize(search, controller)
     @search = search
     @controller = controller
@@ -35,7 +28,7 @@ class IiifContentSearchResponse
   def next_page_url_if_needed
     return unless next_page?
 
-    "#{base_service_url}?start=#{search.start + search.rows}"
+    "#{base_service_url}?start=#{search.start + search.rows}&q=#{URI.encode_www_form_component(search.q)}"
   end
 
   def resources
@@ -46,7 +39,6 @@ class IiifContentSearchResponse
       highlights.each do |highlight|
         highlight.to_enum(:scan, %r{<em>.*?</em>}).each do
           resource = Resource.new(id, Regexp.last_match)
-          # Deduplicate annotations by their generated IDs
           resource.annotations.each do |anno|
             next if seen_ids.include?(anno[:id])
             seen_ids.add(anno[:id])
@@ -58,10 +50,9 @@ class IiifContentSearchResponse
   end
 
   def next_page?
-    search.num_found > (search.start + search.rows)
+    search.num_found.to_i > (search.start.to_i + search.rows.to_i)
   end
 
-  # Transform individual search highlights into IIIF annotations
   class Resource
     attr_reader :manifestid, :canvasid, :highlight
 
@@ -101,7 +92,6 @@ class IiifContentSearchResponse
     end
 
     def canvas_url
-      # Use full manifest URL if manifestid is already a URL, otherwise prepend standard prefix
       if @manifestid.start_with?('http://', 'https://')
         "#{@manifestid}/canvas/#{@canvasid}"
       else

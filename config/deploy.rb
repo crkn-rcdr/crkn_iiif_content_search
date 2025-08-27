@@ -24,7 +24,7 @@ set :deploy_to, "/opt/app/contentsearch/contentsearch"
 # set :pty, true
 
 # Default value for :linked_files is []
-set :linked_files, ->{ ["config/master.key", "config/honeybadger.yml", "config/newrelic.yml"] }
+set :linked_files, ->{ ["config/master.key", "config/newrelic.yml"] }
 
 # Default value for linked_dirs is []
 append :linked_dirs, "log", "tmp/pids", "tmp/cache", "tmp/sockets", "public/system", "config/settings"
@@ -40,9 +40,6 @@ append :linked_dirs, "log", "tmp/pids", "tmp/cache", "tmp/sockets", "public/syst
 
 # Uncomment the following to require manually verifying the host key before first deploy.
 # set :ssh_options, verify_host_key: :secure
-
-# honeybadger_env otherwise defaults to rails_env
-set :honeybadger_env, fetch(:stage)
 
 # update shared_configs before restarting app
 before 'deploy:restart', 'shared_configs:update'

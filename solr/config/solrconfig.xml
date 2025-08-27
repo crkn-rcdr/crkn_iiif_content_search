@@ -56,6 +56,7 @@
 
        <str name="fl">
          id,
+         canvas_index,
          score
        </str>
 
@@ -63,6 +64,8 @@
        <int name="hl.snippets">10</int>
        <str name="hl.fl">ocrtext_en ocrtext_zh_hant</str>
        <str name="hl.method">unified</str>
+        <!-- Added: always sort results by canvas_index ascending -->
+        <str name="sort">canvas_index asc</str>
      </lst>
   </requestHandler>
 

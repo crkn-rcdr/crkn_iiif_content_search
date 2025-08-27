@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 class Search
   include ActiveSupport::Benchmarkable
   include Locking
@@ -9,14 +10,16 @@ class Search
     RSolr.connect(url: Settings.solr.url)
   end
 
-  def initialize(id, q:, start: 0, canvas: nil)
-    @id = "https://crkn-iiif-api.azurewebsites.net/manifest/#{id}"
+  # Initialize with manifest id, query, start offset, optional canvas
+  def initialize(id, q:, start: 0, rows: 100, canvas: nil)
+    @id = id.to_s.match(%r{/manifest/(\d.+)$}) ? $1 : id.to_s
     @q = q
-    @start = start
-    @rows = 100
+    @start = start.to_i
+    @rows = rows.to_i
     @canvas = canvas
   end
 
+  # Provide a logger for ActiveSupport::Benchmarkable
   def logger
     Rails.logger
   end
@@ -45,7 +48,7 @@ class Search
   end
 
   def highlight_request_params
-    fq = ["manifestid:\"#{id}\""]
+    fq = ["manifestid:\"https://crkn-iiif-api.azurewebsites.net/manifest/#{id}\""]
     fq << "canvas_id:\"#{canvas}\"" if canvas.present?
 
     Settings.solr.highlight_params.to_h.merge(
