@@ -1,11 +1,16 @@
 # frozen_string_literal: true
 
-# Transforming search highlighting results into IIIF Content Search API responses
+# Transforming search highlighting results into IIIF Content Search API v2 responses with pagination
 class IiifContentSearchResponse
   attr_reader :search, :controller
 
   delegate :request, to: :controller
 
+  # `search` should respond to:
+  #   .highlights => { "manifestid|canvasid" => ["<em>match</em>", ...] }
+  #   .start => integer offset
+  #   .rows => page size
+  #   .num_found => total hits
   def initialize(search, controller)
     @search = search
     @controller = controller
@@ -13,129 +18,72 @@ class IiifContentSearchResponse
 
   def as_json(*_args)
     {
-      '@context': [
-        'http://iiif.io/api/presentation/2/context.json',
-        'http://iiif.io/api/search/1/context.json'
-      ],
-      '@id': request.original_url,
-      '@type': 'sc:AnnotationList',
-      resources: resources.flat_map(&:annotations).uniq { |a| a[:@id] },
-      hits: hits
-    }.merge(pagination_as_json)
+      "@context": "http://iiif.io/api/search/2/context.json",
+      id: base_service_url,
+      type: "AnnotationPage",
+      items: resources.flat_map(&:annotations),
+      next: next_page_url_if_needed
+    }.compact
+  end
+
+  private
+
+  def base_service_url
+    "https://crkn-iiif-content-search.azurewebsites.net/search/#{search.id}"
+  end
+
+  def next_page_url_if_needed
+    return unless next_page?
+
+    "#{base_service_url}?start=#{search.start + search.rows}"
   end
 
   def resources
     return to_enum(:resources) unless block_given?
 
-    search.highlights.each do |id, hits|
-      # Hit here refers to the Solr hit
-      hits.each do |hit|
-        hit.gsub('</em> <em>', ' ').to_enum(:scan, %r{<em>.*?</em>}).each do |*_match|
-          yield Resource.new(id, Regexp.last_match)
+    seen_ids = Set.new
+    search.highlights.each do |id, highlights|
+      highlights.each do |highlight|
+        highlight.to_enum(:scan, %r{<em>.*?</em>}).each do
+          resource = Resource.new(id, Regexp.last_match)
+          # Deduplicate annotations by their generated IDs
+          resource.annotations.each do |anno|
+            next if seen_ids.include?(anno[:id])
+            seen_ids.add(anno[:id])
+            yield resource
+          end
         end
       end
     end
   end
 
-  private
-
-  def pagination_as_json
-    hash = {
-      within: {
-        '@type': 'sc:Layer',
-        first: first_page_url,
-        last: last_page_url,
-        ignored: ignored_params
-      }
-    }
-    hash[:next] = next_page_url if next_page?
-    hash
-  end
-
-  def first_page_url
-    controller.iiif_content_search_url(id: search.id, start: 0)
-  end
-
-  def next_page_url
-    controller.iiif_content_search_url(id: search.id, start: search.start + search.rows)
-  end
-
-  def last_page_url
-    start = 0 if search.num_found <= search.rows
-    start ||= last_page
-    controller.iiif_content_search_url(id: search.id, start: start)
-  end
-
-  def last_page
-    search.num_found - (search.num_found % search.rows)
-  end
-
   def next_page?
-    search.num_found >= (search.start + search.rows)
+    search.num_found > (search.start + search.rows)
   end
 
-  def ignored_params
-    Settings.iiif.ignored_request_params.select { |param| controller.params.key?(param) }
-  end
-
-  def hits
-    resources.uniq(&:annotation_urls).map do |hit|
-      {
-        '@type': 'search:Hit',
-        annotations: hit.annotation_urls,
-        before: hit.before,
-        after: hit.after,
-        match: hit.match
-      }
-    end
-  end
-
-  # Transform individual search highlights into IIIF resource annotations
+  # Transform individual search highlights into IIIF annotations
   class Resource
-    attr_reader :manifestid, :canvasid, :highlight, :pre_match, :post_match
+    attr_reader :manifestid, :canvasid, :highlight
 
     def initialize(id, highlight)
       @manifestid, @canvasid = id.split("|", 2)
-      @highlight = strip_em highlight.to_s
-      @pre_match = strip_em highlight.pre_match
-      @post_match = strip_em highlight.post_match
+      @highlight = strip_em(highlight.to_s)
     end
 
     def annotations
-      tokens.map do |(chars, xywh)|
+      tokens.map do |chars, xywh|
         {
-          '@id': annotation_url([chars, xywh]),
-          '@type': 'oa:Annotation',
-          motivation: 'sc:painting',
-          resource: {
-            '@type': 'cnt:ContentAsText',
-            chars: chars
+          id: annotation_url(chars, xywh),
+          type: "Annotation",
+          motivation: "highlighting",
+          body: {
+            type: "TextualBody",
+            value: chars,
+            format: "text/plain"
           },
-          on: canvas_fragment_url(xywh)
+          target: canvas_fragment_url(xywh)
         }
       end
-    end
-
-    def annotation_urls
-      tokens.map do |(chars, xywh)|
-        annotation_url([chars, xywh])
-      end
-    end
-
-    def annotation_url(token)
-      "#{canvas_url}/text/at/#{token.last}"
-    end
-
-    def before
-      tokenized_text(pre_match).map(&:first).join(' ').strip
-    end
-
-    def after
-      tokenized_text(post_match).map(&:first).join(' ').strip
-    end
-
-    def match
-      tokenized_text(highlight).map(&:first).join(' ').strip
     end
 
     private
@@ -145,11 +93,7 @@ class IiifContentSearchResponse
     end
 
     def split_word_and_payload(x)
-      if x.match?(/☞/)
-        x.split('☞')
-      else
-        [x, '0,0,0,0']
-      end
+      x.include?("☞") ? x.split("☞") : [x, "0,0,0,0"]
     end
 
     def canvas_fragment_url(xywh)
@@ -157,21 +101,21 @@ class IiifContentSearchResponse
     end
 
     def canvas_url
-      "#{Settings.iiif.canvas_url}/#{@canvasid}"
+      # Use full manifest URL if manifestid is already a URL, otherwise prepend standard prefix
+      if @manifestid.start_with?('http://', 'https://')
+        "#{@manifestid}/canvas/#{@canvasid}"
+      else
+        "https://crkn-iiif-api.azurewebsites.net/manifest/#{@manifestid}/canvas/#{@canvasid}"
+      end
     end
 
-    def tokenized_text(text)
-      sanitized_text(text).split.map { |x| split_word_and_payload(x) }
+    def annotation_url(chars, xywh)
+      coords = URI.encode_www_form_component(xywh)
+      "#{canvas_url}/text/at/#{coords}"
     end
 
     def strip_em(text)
-      text.gsub(%r{</?em>}, '')
-    end
-
-    def sanitized_text(text)
-      return text unless text.match?(/☞/)
-
-      text.sub(/^[\d+,.]+ /, '')
+      text.gsub(%r{</?em>}, "")
     end
   end
 end

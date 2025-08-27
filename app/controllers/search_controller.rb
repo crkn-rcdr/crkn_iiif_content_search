@@ -14,13 +14,8 @@ class SearchController < ApplicationController
   private
 
   def load_search
-    # Pass canvas param if present
-    opts = search_params.slice(:q, :start, :canvas).to_h.symbolize_keys
-    @search = Search.new(search_params[:id], **opts)
-  end
-
-  def search_params
-    params.require(:q)
-    params.permit(:id, :q, :start, :canvas)
+    opts = params.permit(:q, :start, :canvas, :id).to_h.symbolize_keys
+    id = opts.delete(:id)
+    @search = Search.new(id, **opts)
   end
 end

@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 class Search
   include ActiveSupport::Benchmarkable
   include Locking
@@ -9,19 +10,17 @@ class Search
   end
 
   def initialize(id, q:, start: 0, canvas: nil)
-    @id = id
+    @id = "https://crkn-iiif-api.azurewebsites.net/manifest/#{id}"
     @q = q
     @start = start
     @rows = 100
     @canvas = canvas
   end
 
-  
   def logger
     Rails.logger
   end
 
-  
   def num_found
     highlight_response['response']['numFound']
   end
