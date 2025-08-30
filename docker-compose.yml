@@ -6,8 +6,10 @@ services:
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
+    env_file:
+      - .env
     environment:
-      - RAILS_ENV=development
+      - RAILS_ENV=${RAILS_ENV:-development}
     volumes:
       - ./bin:/app/bin
       - ./app:/app/app

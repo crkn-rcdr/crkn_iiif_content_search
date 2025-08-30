@@ -39,6 +39,8 @@ group :development, :test do
   gem 'rubocop-rspec_rails'
 
   gem 'solr_wrapper'
+  # Load environment variables from .env in development/test
+  gem 'dotenv-rails'
 end
 
 group :deployment do
