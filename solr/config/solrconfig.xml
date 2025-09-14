@@ -24,49 +24,38 @@
   <jmx />
 
   <requestHandler name="search" class="solr.SearchHandler" default="true">
-    <!-- default values for query parameters can be specified, these
-         will be overridden by parameters in the request
-      -->
-     <lst name="defaults">
-       <str name="defType">edismax</str>
-       <str name="echoParams">explicit</str>
-       <str name="q.alt">*:*</str>
-       <str name="mm">2&lt;-1 5&lt;-2 6&lt;90%</str>
-       <int name="qs">1</int>
-       <int name="ps">2</int>
-       <float name="tie">0.01</float>
-       <!-- this qf and pf are used by default, if not otherwise specified by
-            client. The default blacklight_config will use these for the
-            "keywords" search. See the author_qf/author_pf, title_qf, etc
-            below, which the default blacklight_config will specify for
-            those searches. You may also be interested in:
-            http://wiki.apache.org/solr/LocalParams
-       -->
-        <str name="qf">
-          id
-          ocrtext
-          ocrtext_en
-          ocrtext_zh_hant
-        </str>
-        <str name="pf">
-          ocrtext^10
-          ocrtext_en^5
-          ocrtext_zh_hant^5
-        </str>
+    <lst name="defaults">
+      <str name="defType">edismax</str>
+      <str name="echoParams">explicit</str>
+      <str name="q.alt">*:*</str>
 
-       <str name="fl">
-         id,
-         canvas_index,
-         score
-       </str>
+      <!-- keep your tuning -->
+      <str name="mm">2&lt;-1 5&lt;-2 6&lt;90%</str>
+      <int name="qs">1</int>
+      <int name="ps">2</int>
+      <float name="tie">0.01</float>
 
-       <str name="hl">true</str>
-       <int name="hl.snippets">10</int>
-       <str name="hl.fl">ocrtext_en ocrtext_zh_hant</str>
-       <str name="hl.method">unified</str>
-        <!-- Added: always sort results by canvas_index ascending -->
-        <str name="sort">canvas_index asc</str>
-     </lst>
+      <!-- Path 2: search ONLY the plain text field -->
+      <str name="qf">ocrtext</str>
+      <str name="pf">ocrtext^10</str>
+
+      <!-- Return useful fields by default (optional if Rails sets fl) -->
+      <str name="fl">id,canvas_index,ocrtext,ocrbbox,score</str>
+
+      <!-- Highlight settings that fit sidecar bbox -->
+      <str name="hl">true</str>
+      <str name="hl.method">unified</str>
+      <str name="hl.fl">ocrtext</str>
+      <str name="hl.offsetSource">ANALYSIS</str>
+      <int name="hl.snippets">10</int>
+      <str name="hl.tag.pre">&lt;em&gt;</str>
+      <str name="hl.tag.post">&lt;/em&gt;</str>
+      <str name="hl.tag.ellipsis"> </str>
+      <str name="hl.requireFieldMatch">true</str>
+
+      <!-- keep your sort -->
+      <str name="sort">canvas_index asc</str>
+    </lst>
   </requestHandler>
 
   <!-- realtime get handler, guaranteed to return the latest stored fields

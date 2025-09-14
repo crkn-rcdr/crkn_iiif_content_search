@@ -1,36 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<schema name="IiifContentSearch" version="1.5">
-
+<schema name="IiifContentSearchSidecar" version="1.6">
   <uniqueKey>id</uniqueKey>
 
   <fields>
-    <field name="id" type="string" stored="true" indexed="true" multiValued="false" required="true"/>
-    <field name="_version_" type="long"     indexed="true"  stored="true"/>
-    <field name="timestamp" type="date" indexed="true" stored="true" default="NOW" multiValued="false"/>
+    <field name="id"           type="string" indexed="true"  stored="true"  required="true" multiValued="false"/>
+    <field name="_version_"    type="long"   indexed="true"  stored="true"/>
+    <field name="timestamp"    type="date"   indexed="true"  stored="true" default="NOW"/>
 
-    <field name="manifestid" type="string" stored="true" indexed="true" multiValued="false"/>
-    <field name="published" type="string" stored="true" indexed="true" multiValued="false"/>
-    <field name="canvas_id" type="string" stored="true" indexed="true" multiValued="false"/>
-    <field name="filename" type="string" stored="true" indexed="true" multiValued="false"/>
-    <field name="ocrtext" type="text_with_delimited_ocr_position" stored="true" indexed="true" multiValued="true" storeOffsetsWithPositions="true" termVectors="true" />
-    <field name="ocrtext_en" type="text_en_with_delimited_ocr_position" stored="true" indexed="true" multiValued="true" storeOffsetsWithPositions="true" termVectors="true" />
-    <field name="ocrtext_zh_hant" 
-       type="text_zh_hant_with_delimited_ocr_position" 
-       stored="true" 
-       indexed="true" 
-       multiValued="true" 
-       storeOffsetsWithPositions="true" 
-       termVectors="true" />
-    
-    <!-- New canvas index field -->
-    <field name="canvas_index" type="int" stored="true" indexed="true" multiValued="false"/>
+    <field name="manifestid"   type="string" indexed="true"  stored="true"/>
+    <field name="canvas_id"    type="string" indexed="true"  stored="true"/>
+    <field name="filename"     type="string" indexed="true"  stored="true"/>
+    <field name="canvas_index" type="int"    indexed="true"  stored="true"/>
+
+    <!-- Plain searchable text (no payloads). Stored so Unified can ANALYZE it. -->
+    <field name="ocrtext"      type="text_en_search" indexed="true" stored="true"
+           multiValued="true" storeOffsetsWithPositions="true" termVectors="false"/>
+
+    <!-- Sidecar bbox: compact JSON {"v":1,"a":[s,l,x,y,w,h,...]} -->
+    <field name="ocrbbox"      type="string" indexed="false" stored="true" multiValued="true"/>
   </fields>
 
-  <copyField source="ocrtext" dest="ocrtext_en"/>
-  <copyField source="ocrtext" dest="ocrtext_zh_hant"/>
-
   <types>
-    <fieldType name="string" class="solr.StrField" sortMissingLast="true" />
+    <fieldType name="string" class="solr.StrField" sortMissingLast="true"/>
     <fieldType name="boolean" class="solr.BoolField" sortMissingLast="true"/>
     <fieldType name="rand" class="solr.RandomSortField" omitNorms="true"/>
     <fieldType name="int" class="solr.TrieIntField" precisionStep="0" positionIncrementGap="0"/>
@@ -39,29 +30,10 @@
     <fieldType name="double" class="solr.TrieDoubleField" precisionStep="0" positionIncrementGap="0"/>
     <fieldType name="date" class="solr.TrieDateField" precisionStep="0" positionIncrementGap="0"/>
 
-    <fieldType name="text_with_delimited_ocr_position" class="solr.TextField" positionIncrementGap="100">
+    <!-- Lightweight English analyzer for OCR text -->
+    <fieldType name="text_en_search" class="solr.TextField" positionIncrementGap="100">
       <analyzer type="index">
-        <tokenizer class="solr.WhitespaceTokenizerFactory" />
-        <filter class="solr.DelimitedPayloadTokenFilterFactory" encoder="identity" delimiter="☞" />
-        <filter class="solr.ICUFoldingFilterFactory"/>
-        <filter class="solr.WordDelimiterGraphFilterFactory"/>
-        <filter class="solr.TrimFilterFactory"/>
-        <filter class="solr.HyphenatedWordsFilterFactory"/>
-        <filter class="solr.FlattenGraphFilterFactory"/>
-      </analyzer>
-      <analyzer type="query">
-        <tokenizer class="solr.WhitespaceTokenizerFactory" />
-        <filter class="solr.DelimitedPayloadTokenFilterFactory" encoder="identity" delimiter="☞" />
-        <filter class="solr.ICUFoldingFilterFactory"/>
-        <filter class="solr.WordDelimiterGraphFilterFactory"/>
-        <filter class="solr.TrimFilterFactory"/>
-      </analyzer>
-    </fieldType>
-
-    <fieldType name="text_en_with_delimited_ocr_position" class="solr.TextField" positionIncrementGap="100">
-      <analyzer type="index">
-        <tokenizer class="solr.WhitespaceTokenizerFactory" />
-        <filter class="solr.DelimitedPayloadTokenFilterFactory" encoder="identity" delimiter="☞" />
+        <tokenizer class="solr.WhitespaceTokenizerFactory"/>
         <filter class="solr.ICUFoldingFilterFactory"/>
         <filter class="solr.WordDelimiterGraphFilterFactory"/>
         <filter class="solr.EnglishPossessiveFilterFactory"/>
@@ -71,8 +43,7 @@
         <filter class="solr.FlattenGraphFilterFactory"/>
       </analyzer>
       <analyzer type="query">
-        <tokenizer class="solr.WhitespaceTokenizerFactory" />
-        <filter class="solr.DelimitedPayloadTokenFilterFactory" encoder="identity" delimiter="☞" />
+        <tokenizer class="solr.WhitespaceTokenizerFactory"/>
         <filter class="solr.ICUFoldingFilterFactory"/>
         <filter class="solr.WordDelimiterGraphFilterFactory"/>
         <filter class="solr.EnglishPossessiveFilterFactory"/>
@@ -80,28 +51,5 @@
         <filter class="solr.TrimFilterFactory"/>
       </analyzer>
     </fieldType>
-
-    <fieldType name="text_zh_hant_with_delimited_ocr_position" class="solr.TextField" positionIncrementGap="100">
-      <analyzer type="index">
-        <tokenizer class="solr.WhitespaceTokenizerFactory" />
-        <filter class="solr.DelimitedPayloadTokenFilterFactory" encoder="identity" delimiter="☞" />
-        <filter class="solr.ICUFoldingFilterFactory" />
-        <filter class="solr.ICUTransformFilterFactory" id="Any-Hant" /> 
-        <filter class="solr.CJKBigramFilterFactory" />
-        <filter class="solr.TrimFilterFactory"/>
-        <filter class="solr.HyphenatedWordsFilterFactory"/>
-        <filter class="solr.FlattenGraphFilterFactory"/>
-      </analyzer>
-
-      <analyzer type="query">
-        <tokenizer class="solr.WhitespaceTokenizerFactory" />
-        <filter class="solr.DelimitedPayloadTokenFilterFactory" encoder="identity" delimiter="☞" />
-        <filter class="solr.ICUFoldingFilterFactory" />
-        <filter class="solr.ICUTransformFilterFactory" id="Any-Hant" />
-        <filter class="solr.CJKBigramFilterFactory" />
-        <filter class="solr.TrimFilterFactory"/>
-      </analyzer>
-    </fieldType>
-
   </types>
 </schema>

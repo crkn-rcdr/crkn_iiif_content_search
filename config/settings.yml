@@ -1,15 +1,23 @@
 iiif:
   ignored_request_params: [motivation, date, user]
-  # Base URL for IIIF canvas API; override via ENV.
   canvas_url: <%= ENV.fetch('IIIF_CANVAS_URL', 'https://crkn-iiif-api.azurewebsites.net/canvas') %>
 
 solr:
-  # Solr base URL; provide full URL including core. Do NOT commit credentials.
-  # Example: http://username:password@host:8983/solr/content_search
-  url: <%= ENV.fetch('SOLR_URL', 'http://localhost:8983/solr/content_search') %>
+  url: <%= ENV.fetch('SOLR_URL', 'http://public:hdwi389e8d!ds@4.204.49.142/solr/content_search') %>
   highlight_path: 'select'
   highlight_params:
-    fl: 'id'
+    df: ocrtext
+    qf: ocrtext
+    fl: "id,canvas_index,ocrbbox,ocrtext,score"
+    hl.method: unified
+    hl.fl: "ocrtext_en ocrtext_zh_hant ocrtext"
+    hl.offsetSource: ANALYSIS   # analyze stored ocrtext at request time
+    hl.tag.pre: "<em>"
+    hl.tag.post: "</em>"
+    hl.tag.ellipsis: " "
+    hl.requireFieldMatch: true
+    hl.snippets: 3
+    hl.fragsize: 140
   suggest_path: 'suggest'
   suggest_params:
     'suggest.count': 1000
