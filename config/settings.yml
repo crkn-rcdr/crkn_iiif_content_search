@@ -3,7 +3,7 @@ iiif:
   canvas_url: <%= ENV.fetch('IIIF_CANVAS_URL', 'https://crkn-iiif-api.azurewebsites.net/canvas') %>
 
 solr:
-  url: <%= ENV.fetch('SOLR_URL', 'http://public:hdwi389e8d!ds@4.204.49.142/solr/content_search') %>
+  url: <%= ENV.fetch('SOLR_URL', 'http://public:hdwi389e8d!ds@4.229.225.26/solr/content_search') %>
   highlight_path: 'select'
   highlight_params:
     df: ocrtext
