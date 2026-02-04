@@ -89,6 +89,8 @@ Ensure docker and docker compose are installed. Then, enter the directory in you
 
 `docker compose up --build --force-recreate -d`
 
+https://crkn-iiif-content-search.azurewebsites.net/search/69429/m00k26971j31?q=test
+
 # Deployment Instructions
 Run the following to push the image to docker hub:
 
