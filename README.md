@@ -1,101 +1,170 @@
-[![Code Climate](https://codeclimate.com/github/sul-dlss/content_search/badges/gpa.svg)](https://codeclimate.com/github/sul-dlss/content_search)
-[![Code Climate Test Coverage](https://codeclimate.com/github/sul-dlss/content_search/badges/coverage.svg)](https://codeclimate.com/github/sul-dlss/content_search/coverage)
-[![GitHub version](https://badge.fury.io/gh/sul-dlss%2Fcontent_search.svg)](https://badge.fury.io/gh/sul-dlss%2Fcontent_search)
-
 # Content Search
 
-Content Search provides a IIIF Content Search 0.9 API endpoint for "search-within" or "highlights-in-context" for digital object OCR.
+Content Search is a small Rails API that implements the IIIF Content Search v2.0 response format for OCR text.
+Given a manifest id and a query, it looks up matches in Solr and returns IIIF annotations ("highlights in context")
+that viewers like Mirador can display.
 
-Content Search will index an item when someone runs a search in sul-embed/Mirador.  Content Search listens to Kafka to invalidate it's cache when an object changes.
+## Quick Start (Docker, recommended)
 
-## Requirements
+1. Install Docker Desktop.
+1. Copy `.env.example` to `.env`.
+1. Fill in the values in `.env`. For team values, see 1Password (details below).
+1. Run `docker compose up --build --force-recreate`.
 
-1. Ruby (2.3.0 or greater)
-2. [bundler](http://bundler.io/) gem
+The API will be available at `http://localhost:3000`.
 
-## Installation
+Try it:
 
-Clone the repository
+```bash
+curl "http://localhost:3000/search/69429/m00k26971j31?q=test"
+```
 
-    $ git clone git@github.com:sul-dlss/content_search.git
+## Quick Start (Local Ruby)
 
-Move into the app and install dependencies
+1. Install Ruby 3.4.x (matches `Dockerfile`) and Bundler.
+1. Run `bundle install`.
+1. Copy `.env.example` to `.env` and fill in values.
+1. Run `bin/rails server`.
 
-    $ cd content_search
-    $ bundle install
+You can also run `bin/setup` to install dependencies and start the server.
 
-Start the development server
+## Secrets and .env (1Password)
 
-    $ rails s
+`.env` is loaded in development and test via `dotenv-rails`.
 
-## Configuring
+Required variables:
 
-Configuration is handled through the [RailsConfig](/railsconfig/config) `settings.yml` files.
+- `SOLR_URL` - Solr core URL for content search.
+- `IIIF_CANVAS_URL` - Base canvas URL used to build IIIF targets.
+- `RAILS_ENV` - Use `development` for local work.
+- `SECRET_KEY_BASE` - Needed for production-like use. Generate with `bin/rails secret`.
 
+The canonical `.env` values for this service are stored in 1Password. Search for the CRKN content search item
+in the shared vault and copy the values. Do not commit `.env`.
 
-# Configuration
+## API Basics
 
-This repo is configured to pull and run solr through docker compose, and has the data folder mapped as a volume, which will allow the solr index to be created automatically for you, and will persist the information in the index for development or production needs.
+Endpoint:
 
-For CRKN in production, we are using a solr instance running independantly from this docker compose. To configure the Solr instance to work with the Blacklight container, I sshed onto the Solr server, and performed the following:
+- `GET /search/*id` with query param `q`.
 
-Connect to the solr vm:
+Parameters:
 
-`ssh -i ~/.ssh/<id file>.pem <user>@4.204.49.142`
+- `q` (required) - Search text.
+- `start` (optional) - Pagination offset.
+- `canvas` (optional) - Limit results to a single canvas id.
 
-Created the content_search core config directory:
-`sudo mkdir /opt/bitnami/solr/server/solr/content_search/`
-`sudo mkdir /opt/bitnami/solr/server/solr/content_search/conf`
+Notes:
 
-Copied the default configs to my new core:
+- `id` can be a short id like `69429/m00k26971j31` or a full manifest URL. If you pass a full URL, make sure it is URL-encoded. The service normalizes to the last two path segments.
+- The response is an IIIF Content Search v2 `AnnotationPage` with `items`.
 
-`sudo cp -r /opt/bitnami/solr/server/solr/configsets/_default/conf/* /opt/bitnami/solr/server/solr/content_search/conf/`
+Examples:
 
-Went into the new core's config directory:
+```bash
+curl "http://localhost:3000/search/69429/m00k26971j31?q=test&start=0"
+curl "http://localhost:3000/search/69429/m00k26971j31?q=test&canvas=69429/m00k26971j31/canvas/1"
+```
 
-`cd /opt/bitnami/solr/server/solr/content_search/conf/`
+Health checks:
 
-Removed the default solr config:
+- `GET /status` (OkComputer)
+- `GET /sidekiq` (Sidekiq UI, if enabled)
 
-`sudo rm solrconfig.xml`
+## IIIF in 2 Minutes
 
-Pasted the solrconfig from this repo into a new solrconfig file:
+- A Manifest describes a digital item.
+- A Canvas is a single page or view inside a manifest.
+- This service returns Annotations that highlight matching OCR text on a canvas.
 
-`sudo vi solrconfig.xml`
+Useful docs:
 
-Removed the default solr schema:
+- IIIF overview: https://iiif.io/
+- IIIF Content Search API v2: https://iiif.io/api/search/2.0/
 
-`sudo rm managed-schema.xml`
+## Rails in 2 Minutes
 
-Pasted the solr schema from this repo into a new solr schema file:
+Common commands:
 
-`sudo vi managed-schema.xml`
+- `bin/rails server` - Start the app.
+- `bin/rails console` - Interactive Rails console.
+- `bin/rails routes` - List routes and controllers.
+- `bin/rails log:tail` - Tail development logs.
 
-Restarted solr to apply the changes:
+Debugging:
 
-`sudo /opt/bitnami/ctlscript.sh restart solr`
+- Add `binding.break` in Ruby code, then hit the endpoint.
+- Rails guide: https://guides.rubyonrails.org/debugging_rails_applications.html
 
+## Project Map
 
-A quick command to clear the solr index is:
+Key files:
 
-`curl -X POST -H 'Content-Type: application/json' 'http://username:password@host/solr/content_search/update?commit=true' -d '{ "delete": {"query":"*:*"} }'`
+- `app/controllers/search_controller.rb` - HTTP entry point.
+- `app/models/search.rb` - Solr queries and parameters.
+- `app/models/iiif_content_search_response.rb` - Builds the IIIF response.
+- `solr/conf/` - Solr schema and config for this service.
 
-#### Local Configuration
+## Solr Notes
 
-The defaults in `config/settings.yml` should work on a locally run installation.
+This repo includes Solr config under `solr/conf/`. Docker compose only runs the Rails app, so Solr must be provided separately. For local work, either:
 
-# Developing Locally
-Ensure docker and docker compose are installed. Then, enter the directory in your terminal, and run:
+- Point `SOLR_URL` to an existing Solr core.
+- Run your own Solr and use the config files in `solr/conf/`.
 
-`docker compose up --build --force-recreate -d`
+To clear the Solr index:
 
-https://crkn-iiif-content-search.azurewebsites.net/search/69429/m00k26971j31?q=test
+```bash
+curl -X POST -H "Content-Type: application/json" "http://username:password@host/solr/content_search/update?commit=true" -d '{ "delete": {"query":"*:*"} }'
+```
 
-# Deployment Instructions
-Run the following to push the image to docker hub:
+### Production Solr Setup (CRKN)
 
-`docker tag crkn_iiif_content_search-iiif_search brilap/crkn-search`
+For CRKN production, Solr runs outside of docker compose. High-level steps:
 
-`docker push brilap/crkn-search`
+1. SSH to the Solr VM.
+1. Create the `content_search` core and `conf` directory.
+1. Copy the default configset.
+1. Replace `solrconfig.xml` and `managed-schema.xml` with the versions from `solr/conf/`.
+1. Restart Solr.
 
-Then restart the web app on [Azure](https://portal.azure.com/#@crkn.ca/resource/subscriptions/1bf1b056-be1d-4b1c-991f-2f154caf3061/resourcegroups/CRKN-demo-test/providers/Microsoft.Web/sites/crkn-iiif-content-search/appServices) to pull the new docker image.
+Commands:
+
+```bash
+ssh -i ~/.ssh/<id file>.pem <user>@4.204.49.142
+sudo mkdir /opt/bitnami/solr/server/solr/content_search/
+sudo mkdir /opt/bitnami/solr/server/solr/content_search/conf
+sudo cp -r /opt/bitnami/solr/server/solr/configsets/_default/conf/* /opt/bitnami/solr/server/solr/content_search/conf/
+cd /opt/bitnami/solr/server/solr/content_search/conf/
+sudo rm solrconfig.xml
+sudo vi solrconfig.xml
+sudo rm managed-schema.xml
+sudo vi managed-schema.xml
+sudo /opt/bitnami/ctlscript.sh restart solr
+```
+
+## Development
+
+Run tests:
+
+```bash
+bundle exec rspec
+```
+
+Lint:
+
+```bash
+bundle exec rubocop
+```
+
+## Deployment
+
+Build and push the Docker image:
+
+```bash
+docker tag crkn_iiif_content_search-iiif_search brilap/crkn-search
+docker push brilap/crkn-search
+```
+
+Then restart the web app on Azure to pull the new image:
+https://portal.azure.com/#@crkn.ca/resource/subscriptions/1bf1b056-be1d-4b1c-991f-2f154caf3061/resourcegroups/CRKN-demo-test/providers/Microsoft.Web/sites/crkn-iiif-content-search/appServices
