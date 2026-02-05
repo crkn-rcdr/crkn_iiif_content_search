@@ -173,6 +173,11 @@ sudo /opt/bitnami/ctlscript.sh restart solr
 
 ## Development
 
+Run container:
+```bash
+docker compose up
+```
+
 Run tests:
 
 ```bash
