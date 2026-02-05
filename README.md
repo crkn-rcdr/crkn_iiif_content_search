@@ -150,7 +150,7 @@ curl -X POST -H "Content-Type: application/json" "http://username:password@host/
 
 For CRKN production, Solr runs outside of docker compose. High-level steps:
 
-1. SSH to the Solr VM.
+1. SSH to the Solr container.
 1. Create the `content_search` core and `conf` directory.
 1. Copy the default configset.
 1. Replace `solrconfig.xml` and `managed-schema.xml` with the versions from `solr/conf/`.
