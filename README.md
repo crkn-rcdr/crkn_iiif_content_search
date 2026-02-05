@@ -2,7 +2,7 @@
 
 Content Search is a small Rails API that implements the IIIF Content Search v2.0 response format for OCR text.
 Given a manifest id and a query, it looks up matches in Solr and returns IIIF annotations ("highlights in context")
-that viewers like Mirador can display.
+that viewers like [Mirador](https://github.com/ProjectMirador/mirador) can display.
 
 ## Quick Start (Docker, recommended)
 
