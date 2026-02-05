@@ -147,29 +147,13 @@ curl -X POST -H "Content-Type: application/json" "http://username:password@host/
 ```
 
 ### Production Solr Setup (CRKN)
-
-For CRKN production, Solr runs outside of docker compose. High-level steps:
-
+For CRKN production, Solr runs in a docker container. The data dir needs to be a volume.
+High-level steps:
 1. SSH to the Solr container.
-1. Create the `content_search` core and `conf` directory.
-1. Copy the default configset.
-1. Replace `solrconfig.xml` and `managed-schema.xml` with the versions from `solr/conf/`.
-1. Restart Solr.
-
-Commands:
-
-```bash
-ssh -i ~/.ssh/<id file>.pem <user>@4.204.49.142
-sudo mkdir /opt/bitnami/solr/server/solr/content_search/
-sudo mkdir /opt/bitnami/solr/server/solr/content_search/conf
-sudo cp -r /opt/bitnami/solr/server/solr/configsets/_default/conf/* /opt/bitnami/solr/server/solr/content_search/conf/
-cd /opt/bitnami/solr/server/solr/content_search/conf/
-sudo rm solrconfig.xml
-sudo vi solrconfig.xml
-sudo rm managed-schema.xml
-sudo vi managed-schema.xml
-sudo /opt/bitnami/ctlscript.sh restart solr
-```
+2. Create the `blacklight_marc` core and `conf` directory.
+3. Copy the default configset.
+4. Replace `solrconfig.xml` and `managed-schema.xml` with the versions from this repo.
+5. Restart Solr.
 
 ## Development
 
