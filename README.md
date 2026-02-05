@@ -193,3 +193,9 @@ Deploy:
 
 Notes:
 - The script will prompt you to create a ticket in this repo. Create it and copy the image name from that ticket.
+
+
+## Docs
+- IIIF overview: https://iiif.io/
+- IIIF Content Search API v2: https://iiif.io/api/search/2.0/
+- Debugging Rails: https://guides.rubyonrails.org/debugging_rails_applications.html
