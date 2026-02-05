@@ -19,6 +19,34 @@ Try it:
 curl "http://localhost:3000/search/69429/m00k26971j31?q=test"
 ```
 
+## Docker Desktop + WSL2 (Windows + Ubuntu)
+
+These steps set up Docker Desktop to build containers in Ubuntu on WSL2.
+
+1. Install Docker Desktop (Windows).
+1. Ensure Docker Desktop uses the WSL2 engine: Docker Desktop → Settings → General → check `Use the WSL 2 based engine`.
+1. Install WSL + Ubuntu in PowerShell (Admin):
+
+```powershell
+wsl --install -d Ubuntu
+```
+
+1. Reboot if prompted.
+1. Launch Ubuntu from the Start menu or run `wsl`.
+1. Update Ubuntu packages:
+
+```bash
+sudo apt update
+sudo apt upgrade -y
+```
+
+1. In Ubuntu, navigate to the repo and build:
+
+```bash
+cd /mnt/c/Users/BrittnyLapierre/Documents/github/crkn_iiif_content_search
+docker compose build
+```
+
 ## Quick Start (Local Ruby)
 
 1. Install Ruby 3.4.x (matches `Dockerfile`) and Bundler.
@@ -157,14 +185,22 @@ Lint:
 bundle exec rubocop
 ```
 
-## Deployment
+## Deployment (CRKN Servers)
 
-Build and push the Docker image:
+We deploy to CRKN internal servers using `./deployImage.sh`, which builds and pushes the image to the internal Docker
+registry.
+
+Prereqs:
+
+- Docker Desktop installed and running (Linux containers).
+- VPN connected (OpenVPN).
+- Registry credentials from 1Password (item: `docker.c7a.ca`).
+
+Deploy:
 
 ```bash
-docker tag crkn_iiif_content_search-iiif_search brilap/crkn-search
-docker push brilap/crkn-search
+./deployImage.sh
 ```
 
-Then restart the web app on Azure to pull the new image:
-https://portal.azure.com/#@crkn.ca/resource/subscriptions/1bf1b056-be1d-4b1c-991f-2f154caf3061/resourcegroups/CRKN-demo-test/providers/Microsoft.Web/sites/crkn-iiif-content-search/appServices
+Notes:
+- The script will prompt you to create a ticket in this repo. Create it and copy the image name from that ticket.
