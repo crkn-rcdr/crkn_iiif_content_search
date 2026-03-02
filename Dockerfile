@@ -15,9 +15,7 @@ COPY Gemfile .
 RUN bundle install
 
 COPY . .
-#RUN yarn install
-# RUN RAILS_ENV=development 
-# rails vite:build
+
 RUN bundle install --without development test
 
 EXPOSE 3000
