@@ -15,10 +15,10 @@ that viewers like [Mirador](https://github.com/ProjectMirador/mirador) can displ
 docker compose -f docker-compose.dev.yml up --build --force-recreate
 ```
 
-1. For production-style startup (runs `db:prepare` first), run:
+1. For production-style startup, run:
 
 ```bash
-docker compose -f docker-compose.prod.yml run --rm --service-ports web sh -lc "bundle exec rails db:prepare && bundle exec rails server -b 0.0.0.0 -p 3000"
+docker compose -f docker-compose.prod.yml up
 ```
 
 The API will be available at `http://localhost:3000`.
