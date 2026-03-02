@@ -9,7 +9,17 @@ that viewers like [Mirador](https://github.com/ProjectMirador/mirador) can displ
 1. Install Docker Desktop.
 1. Copy `.env.example` to `.env`.
 1. Fill in the values in `.env`. For team values, see 1Password (details below).
-1. Run `docker compose up --build --force-recreate`.
+1. For development, run:
+
+```bash
+docker compose -f docker-compose.dev.yml up --build --force-recreate
+```
+
+1. For production-style startup (runs `db:prepare` first), run:
+
+```bash
+docker compose -f docker-compose.prod.yml run --rm --service-ports web sh -lc "bundle exec rails db:prepare && bundle exec rails server -b 0.0.0.0 -p 3000"
+```
 
 The API will be available at `http://localhost:3000`.
 
@@ -157,9 +167,14 @@ High-level steps:
 
 ## Development
 
-Run container:
+Run development container:
 ```bash
-docker compose up
+docker compose -f docker-compose.dev.yml up --build --force-recreate
+```
+
+Run production-style container command:
+```bash
+docker compose -f docker-compose.prod.yml run --rm --service-ports web sh -lc "bundle exec rails db:prepare && bundle exec rails server -b 0.0.0.0 -p 3000"
 ```
 
 Run tests:
