@@ -58,6 +58,6 @@ Rails.application.configure do
   #
   # Skip DNS rebinding protection for the default health check endpoint.
   # config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
-  config.hosts << 'localhost:3000'
-  config.hosts << 'crkn-iiif-content-search.azurewebsites.net'
+  config.hosts << ENV.fetch("CONTENT_SEARCH_HOST_IP", "localhost:3000")
+  config.hosts << ENV.fetch("CONTENT_SEARCH_HOST_ADDR", "crkn-iiif-content-search.azurewebsites.net")
 end
