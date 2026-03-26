@@ -1,6 +1,6 @@
 version: '3'
 services:
-  iiif_search:
+  web:
     build:
       context: .
       dockerfile: Dockerfile
