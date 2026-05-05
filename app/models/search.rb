@@ -9,12 +9,34 @@ class Search
     RSolr.connect(url: Settings.solr.url)
   end
 
+  def self.normalize_manifest_id(raw_id)
+    normalized = sanitize_identifier(raw_id)
+    return normalized if normalized.blank?
+
+    if (match = normalized.match(%r{/manifest/([^?#]+)}))
+      match[1]
+    else
+      normalized.split('/').last(2).join('/')
+    end
+  end
+
+  def self.normalize_canvas_id(raw_canvas)
+    normalized = sanitize_identifier(raw_canvas)
+    return if normalized.blank?
+
+    if (match = normalized.match(%r{/canvas/([^?#]+)}))
+      match[1]
+    else
+      normalized.split('/').last(2).join('/')
+    end
+  end
+
   def initialize(id, q:, start: 0, rows: 100, canvas: nil)
-    @id = id.to_s.match(%r{/manifest/(\d.+)$}) ? $1 : id.to_s
+    @id = self.class.normalize_manifest_id(id)
     @q = q
     @start = start.to_i
     @rows = rows.to_i
-    @canvas = canvas
+    @canvas = self.class.normalize_canvas_id(canvas)
   end
 
   def logger = Rails.logger
@@ -46,23 +68,54 @@ class Search
   end
 
   def highlight_request_params
-    fq = ["manifestid:\"https://crkn-iiif-api.azurewebsites.net/manifest/#{id}\""]
-    fq << "canvas_id:\"#{canvas}\"" if canvas.present?
-
-    Settings.solr.highlight_params.to_h.merge(
-      fq: fq,
+    {
+      fq: highlight_filters,
       rows: rows,
       start: start,
-      # Make sure we actually bring back the stored text & sidecar:
       fl: 'id,canvas_index,ocrtext,ocrbbox,score',
-      # Highlight can use any of the copies; include base too to keep text identical to sidecar offsets:
-      'hl.fl' => 'ocrtext_en ocrtext_zh_hant ocrtext',
+      'hl.fl' => 'ocrtext',
       'hl.method' => 'unified',
-      'hl.tag.ellipsis' => ' '
-    )
+      'hl.offsetSource' => 'ANALYSIS',
+      'hl.tag.pre' => '<em>',
+      'hl.tag.post' => '</em>',
+      'hl.tag.ellipsis' => ' ',
+      'hl.requireFieldMatch' => false,
+      'hl.snippets' => 10,
+      'hl.maxAnalyzedChars' => 2_000_000
+    }
   end
 
-  
+  def highlight_filters
+    filters = [solr_or_filter('manifestid', [id, manifest_url(id)])]
+    filters << solr_or_filter('canvas_id', canvas_filter_values) if canvas.present?
+    filters
+  end
+
+  def canvas_filter_values
+    [
+      canvas,
+      "#{id}/canvas/#{canvas}",
+      "#{manifest_url(id)}/canvas/#{canvas}"
+    ].compact_blank.uniq
+  end
+
+  def manifest_url(manifest_id)
+    "#{iiif_api_base_url}/manifest/#{manifest_id}"
+  end
+
+  def iiif_api_base_url
+    Settings.iiif.api_url.to_s.sub(%r{/+\z}, '')
+  end
+
+  def solr_or_filter(field, values)
+    escaped_values = values.compact_blank.uniq.map do |value|
+      %("#{RSolr.solr_escape(value)}")
+    end
+
+    return "#{field}:#{escaped_values.first}" if escaped_values.one?
+
+    "#{field}:(#{escaped_values.join(' OR ')})"
+  end
 
   def get(url, params:)
     p = params.reverse_merge(q: q)
@@ -70,4 +123,9 @@ class Search
       self.class.client.get(url, params: p)
     end
   end
+
+  def self.sanitize_identifier(raw_value)
+    raw_value.to_s.strip.sub(%r{[?#].*\z}, '').sub(%r{\A/+}, '')
+  end
+  private_class_method :sanitize_identifier
 end

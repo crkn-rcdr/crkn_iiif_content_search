@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
+<!-- # Distributed by puppet - no local edit please -->
 <config>
   <!-- NOTE: various comments and unused configuration possibilities have been purged
      from this file.  Please refer to http://wiki.apache.org/solr/SolrConfigXml,
@@ -6,7 +7,7 @@
 
   <abortOnConfigurationError>${solr.abortOnConfigurationError:true}</abortOnConfigurationError>
 
-  <luceneMatchVersion>9.6.1</luceneMatchVersion>
+  <luceneMatchVersion>9.10</luceneMatchVersion>
 
   <directoryFactory name="DirectoryFactory" class="${solr.directoryFactory:solr.StandardDirectoryFactory}"/>
 
@@ -36,8 +37,66 @@
       <float name="tie">0.01</float>
 
       <!-- Path 2: search ONLY the plain text field -->
-      <str name="qf">ocrtext</str>
-      <str name="pf">ocrtext^10</str>
+      <str name="qf">
+          ocrtext^3
+          ocrtext_general^2
+          ocrtext_en
+          ocrtext_fr
+          ocrtext_de
+          ocrtext_nl
+          ocrtext_da
+          ocrtext_fi
+          ocrtext_sv
+          ocrtext_es
+          ocrtext_it
+          ocrtext_hu
+          ocrtext_is
+          ocrtext_ga
+          ocrtext_cy
+          ocrtext_cjk
+          ocrtext_zh_hant
+          ocrtext_ja
+          ocrtext_ko
+          ocrtext_th
+          ocrtext_indic
+          ocrtext_cyrl
+          ocrtext_he
+          ocrtext_el
+          ocrtext_indigenous
+          ocrtext_cre
+          ocrtext_iku
+          ocrtext_ypk
+      </str>
+      <str name="pf">
+          ocrtext^10
+          ocrtext_general^8
+          ocrtext_en^8
+          ocrtext_fr^8
+          ocrtext_de^8
+          ocrtext_nl^8
+          ocrtext_da^8
+          ocrtext_fi^8
+          ocrtext_sv^8
+          ocrtext_es^8
+          ocrtext_it^8
+          ocrtext_hu^8
+          ocrtext_is^8
+          ocrtext_ga^8
+          ocrtext_cy^8
+          ocrtext_cjk^8
+          ocrtext_zh_hant^8
+          ocrtext_ja^8
+          ocrtext_ko^8
+          ocrtext_th^8
+          ocrtext_indic^8
+          ocrtext_cyrl^8
+          ocrtext_he^8
+          ocrtext_el^8
+          ocrtext_indigenous^8
+          ocrtext_cre^8
+          ocrtext_iku^8
+          ocrtext_ypk^8
+      </str>
 
       <!-- Return useful fields by default (optional if Rails sets fl) -->
       <str name="fl">id,canvas_index,ocrtext,ocrbbox,score</str>
@@ -48,10 +107,11 @@
       <str name="hl.fl">ocrtext</str>
       <str name="hl.offsetSource">ANALYSIS</str>
       <int name="hl.snippets">10</int>
+      <int name="hl.maxAnalyzedChars">2000000</int>
       <str name="hl.tag.pre">&lt;em&gt;</str>
       <str name="hl.tag.post">&lt;/em&gt;</str>
       <str name="hl.tag.ellipsis"> </str>
-      <str name="hl.requireFieldMatch">true</str>
+      <str name="hl.requireFieldMatch">false</str>
 
       <!-- keep your sort -->
       <str name="sort">canvas_index asc</str>

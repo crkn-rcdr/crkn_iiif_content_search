@@ -73,7 +73,8 @@ You can also run `bin/setup` to install dependencies and start the server.
 Required variables:
 
 - `SOLR_URL` - Solr core URL for content search.
-- `IIIF_CANVAS_URL` - Base canvas URL used to build IIIF targets.
+- `IIIF_API_URL` - Base IIIF API URL used to build manifest/canvas targets.
+- `IIIF_CANVAS_URL` - Optional explicit canvas base URL. Defaults to `IIIF_API_URL + /canvas`.
 - `RAILS_ENV` - Use `development` for local work.
 - `SECRET_KEY_BASE` - Needed for production-like use. Generate with `bin/rails secret`.
 

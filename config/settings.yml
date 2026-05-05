@@ -1,6 +1,7 @@
 iiif:
   ignored_request_params: [motivation, date, user]
-  canvas_url: <%= ENV.fetch('IIIF_CANVAS_URL', 'https://crkn-iiif-api.azurewebsites.net/canvas') %>
+  api_url: <%= ENV.fetch('IIIF_API_URL', 'https://crkn-iiif-api.azurewebsites.net') %>
+  canvas_url: <%= ENV.fetch('IIIF_CANVAS_URL', "#{ENV.fetch('IIIF_API_URL', 'https://crkn-iiif-api.azurewebsites.net')}/canvas") %>
 
 solr:
   url: <%= ENV.fetch('SOLR_URL', 'http://public:hdwi389e8d!ds@4.229.225.26/solr/content_search') %>

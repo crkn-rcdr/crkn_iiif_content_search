@@ -147,13 +147,17 @@ class IiifContentSearchResponse
       if @manifestid.start_with?('http://', 'https://')
         "#{@manifestid}/canvas/#{@canvasid}"
       else
-        "https://crkn-iiif-api.azurewebsites.net/manifest/#{@manifestid}/canvas/#{@canvasid}"
+        "#{iiif_api_url}/manifest/#{@manifestid}/canvas/#{@canvasid}"
       end
     end
 
     def annotation_url(_chars, xywh)
       coords = URI.encode_www_form_component(xywh)
       "#{canvas_url}/text/at/#{coords}"
+    end
+
+    def iiif_api_url
+      Settings.iiif.api_url.to_s.sub(%r{/+\z}, '')
     end
 
     def strip_em(text)
