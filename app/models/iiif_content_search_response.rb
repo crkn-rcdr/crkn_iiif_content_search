@@ -21,7 +21,11 @@ class IiifContentSearchResponse
   private
 
   def base_service_url
-    "https://crkn-iiif-content-search.azurewebsites.net/search/#{search.id}"
+    if request&.base_url.present?
+      "#{request.base_url}/search/#{search.id}"
+    else
+      "https://crkn-iiif-content-search.azurewebsites.net/search/#{search.id}"
+    end
   end
 
   def next_page_url_if_needed
@@ -40,13 +44,15 @@ class IiifContentSearchResponse
       next unless doc # (shouldn’t happen if fl included id)
 
       highlights.each do |hl|
+        cursor = 0
         hl.to_enum(:scan, %r{<em>.*?</em>}).each do
-          resource = Resource.new(id, Regexp.last_match, doc)  # <-- pass doc
+          resource = Resource.new(id, Regexp.last_match, doc, cursor)  # <-- pass doc and cursor
           resource.annotations.each do |anno|
             next if seen_ids.include?(anno[:id])
             seen_ids.add(anno[:id])
             yield resource
           end
+          cursor = resource.last_cursor if resource.last_cursor&.positive?
         end
       end
     end
@@ -59,14 +65,16 @@ class IiifContentSearchResponse
   class Resource
     require 'json'
 
-    attr_reader :manifestid, :canvasid, :highlight, :ocrtext, :bbox_map
+    attr_reader :manifestid, :canvasid, :highlight, :ocrtext, :bbox_map, :last_cursor
 
-    def initialize(id, highlight_match, doc)
+    def initialize(id, highlight_match, doc, start_cursor = 0)
       @manifestid, @canvasid = id.split('|', 2)
       @highlight = strip_em(highlight_match.to_s)
       @ocrtext   = Array(doc['ocrtext']).first.to_s
       @bbox_map  = parse_bbox(Array(doc['ocrbbox']).first)
       @by_start  = build_by_start(@bbox_map) # start_offset => [[len, xywh], ...] (shortest first)
+      @start_cursor = start_cursor
+      @last_cursor  = start_cursor
     end
 
     def annotations
@@ -126,7 +134,7 @@ class IiifContentSearchResponse
       return [] if highlight.blank? || ocrtext.blank? || bbox_map.empty?
       words  = highlight.split(/\s+/).reject(&:blank?)
       out    = []
-      cursor = 0
+      cursor = @start_cursor || 0
       words.each do |w|
         idx = ocrtext.index(w, cursor) || ocrtext.index(w) # fall back to first occurrence
         if idx
@@ -136,6 +144,7 @@ class IiifContentSearchResponse
           out << [w, "0,0,0,0"]
         end
       end
+      @last_cursor = cursor
       out
     end
 

@@ -54,6 +54,7 @@ end
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
 gem 'tzinfo-data', platforms: %i[windows jruby]
 
+gem 'json', '< 3.0'
 gem 'config'
 gem 'http'
 gem 'newrelic_rpm', group: :production
