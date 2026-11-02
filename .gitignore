@@ -27,3 +27,16 @@ config/environments/*.local.yml
 # Local environment variables (never commit)
 .env
 .env.*
+
+# Python cache from local solr loader
+__pycache__/
+*.py[cod]
+
+# Untracked lockfile
+Gemfile.lock
+
+# Secret keys and certs
+*.key
+*.pem
+*.p12
+*.pfx
