@@ -89,6 +89,26 @@ RSpec.describe IiifContentSearchResponse, type: :controller do
       expect(george_items.length).to eq 1
     end
 
+    it 'returns hits for documents without ocrbbox so page hit counts work' do
+      doc_no_bbox = {
+        doc_id => {
+          'id' => doc_id,
+          'ocrtext' => ['Police regulations were issued under official regulations.'],
+          'ocrbbox' => []
+        }
+      }
+      highlights_no_bbox = {
+        doc_id => ['Police <em>regulations</em> were issued under official <em>regulations</em>.']
+      }
+      allow(search).to receive(:docs_by_id).and_return(doc_no_bbox)
+      allow(search).to receive(:highlights).and_return(highlights_no_bbox)
+
+      items = response.as_json[:items]
+      expect(items.length).to eq 2
+      expect(items.map { |i| i[:target] }).to all(include('#xywh=0,0,0,0'))
+      expect(items.map { |i| i[:id] }.uniq.length).to eq 2
+    end
+
     context 'with pagination' do
       it 'omits next link when on the last page' do
         expect(response.as_json).not_to have_key(:next)
@@ -128,10 +148,13 @@ RSpec.describe IiifContentSearchResponse, type: :controller do
       expect(annotations.first[:target]).to include('#xywh=10,20,30,40')
     end
 
-    it 'falls back to 0,0,0,0 when bbox map is empty or word is not found' do
-      empty_doc = { 'ocrtext' => ['other text'], 'ocrbbox' => [] }
-      res = described_class.new(doc_id, '<em>missing</em>', empty_doc, 0)
-      expect(res.annotations).to be_empty
+    it 'falls back to 0,0,0,0 when bbox map is empty and preserves hits for page counting' do
+      doc_without_bbox = { 'ocrtext' => ['regulations for police regulations'], 'ocrbbox' => [] }
+      res = described_class.new(doc_id, '<em>regulations</em>', doc_without_bbox, 0)
+      annotations = res.annotations
+      expect(annotations).not_to be_empty
+      expect(annotations.first[:target]).to include('#xywh=0,0,0,0')
+      expect(annotations.first[:body][:value]).to eq 'regulations'
     end
   end
 end

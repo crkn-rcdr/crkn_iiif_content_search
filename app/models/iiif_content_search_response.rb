@@ -78,9 +78,9 @@ class IiifContentSearchResponse
     end
 
     def annotations
-      tokens.map do |chars, xywh|
+      tokens.map do |chars, xywh, offset|
         {
-          id: annotation_url(chars, xywh),
+          id: annotation_url(chars, xywh, offset),
           type: "Annotation",
           motivation: "highlighting",
           body: { type: "TextualBody", value: chars, format: "text/plain" },
@@ -131,17 +131,17 @@ class IiifContentSearchResponse
 
     # find each word of the <em>…</em> run in the stored text (same text used to build offsets)
     def tokens
-      return [] if highlight.blank? || ocrtext.blank? || bbox_map.empty?
+      return [] if highlight.blank? || ocrtext.blank?
       words  = highlight.split(/\s+/).reject(&:blank?)
       out    = []
       cursor = @start_cursor || 0
       words.each do |w|
         idx = ocrtext.index(w, cursor) || ocrtext.index(w) # fall back to first occurrence
         if idx
-          out << [w, lookup_xywh(idx, w.length)]
+          out << [w, lookup_xywh(idx, w.length), idx]
           cursor = idx + w.length
         else
-          out << [w, "0,0,0,0"]
+          out << [w, "0,0,0,0", cursor]
         end
       end
       @last_cursor = cursor
@@ -160,9 +160,10 @@ class IiifContentSearchResponse
       end
     end
 
-    def annotation_url(_chars, xywh)
+    def annotation_url(_chars, xywh, offset = nil)
       coords = URI.encode_www_form_component(xywh)
-      "#{canvas_url}/text/at/#{coords}"
+      suffix = (xywh == "0,0,0,0" && offset) ? "/#{offset}" : ""
+      "#{canvas_url}/text/at/#{coords}#{suffix}"
     end
 
     def iiif_api_url
