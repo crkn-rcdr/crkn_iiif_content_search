@@ -149,6 +149,7 @@ class IiifContentSearchResponse
     end
 
     def canvas_fragment_url(xywh)
+      return canvas_url if xywh.blank? || xywh == "0,0,0,0"
       "#{canvas_url}#xywh=#{xywh.split(',').map(&:to_i).join(',')}"
     end
 

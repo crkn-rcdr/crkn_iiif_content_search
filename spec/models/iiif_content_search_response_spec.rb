@@ -105,7 +105,9 @@ RSpec.describe IiifContentSearchResponse, type: :controller do
 
       items = response.as_json[:items]
       expect(items.length).to eq 2
-      expect(items.map { |i| i[:target] }).to all(include('#xywh=0,0,0,0'))
+      # IIIF Content Search 2.0: fragment selector omitted when coordinates are unavailable
+      expect(items.map { |i| i[:target] }).to all(include("/manifest/#{manifest_id}/canvas/#{canvas_id}"))
+      expect(items.map { |i| i[:target] }).not_to include(include('#xywh'))
       expect(items.map { |i| i[:id] }.uniq.length).to eq 2
     end
 
@@ -148,12 +150,13 @@ RSpec.describe IiifContentSearchResponse, type: :controller do
       expect(annotations.first[:target]).to include('#xywh=10,20,30,40')
     end
 
-    it 'falls back to 0,0,0,0 when bbox map is empty and preserves hits for page counting' do
+    it 'falls back to bare canvas target when bbox map is empty and preserves hits for page counting' do
       doc_without_bbox = { 'ocrtext' => ['regulations for police regulations'], 'ocrbbox' => [] }
       res = described_class.new(doc_id, '<em>regulations</em>', doc_without_bbox, 0)
       annotations = res.annotations
       expect(annotations).not_to be_empty
-      expect(annotations.first[:target]).to include('#xywh=0,0,0,0')
+      expect(annotations.first[:target]).to include("/manifest/#{manifest_id}/canvas/#{canvas_id}")
+      expect(annotations.first[:target]).not_to include('#xywh')
       expect(annotations.first[:body][:value]).to eq 'regulations'
     end
   end
