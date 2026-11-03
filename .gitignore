@@ -31,6 +31,7 @@ config/environments/*.local.yml
 # Python cache from local solr loader
 __pycache__/
 *.py[cod]
+solr/*.py
 
 # Untracked lockfile
 Gemfile.lock
