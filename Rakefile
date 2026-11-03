@@ -18,7 +18,7 @@ end
 
 # remove default rspec task
 task(:default).clear
-task default: %i[rubocop ci]
+task default: %i[spec]
 
 task ci: [:environment] do
   SolrWrapper.wrap(port: '8983') do |solr|

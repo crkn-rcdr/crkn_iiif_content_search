@@ -99,4 +99,16 @@ RSpec.describe Search do
       expect(search.num_found).to eq 15
     end
   end
+
+  describe '#docs_by_id' do
+    it 'indexes returned solr docs by id' do
+      client = instance_double(
+        RSolr::Client,
+        get: { 'response' => { 'docs' => [{ 'id' => 'doc1' }, { 'id' => 'doc2' }] } }
+      )
+      allow(described_class).to receive(:client).and_return(client)
+
+      expect(search.docs_by_id.keys).to eq %w[doc1 doc2]
+    end
+  end
 end

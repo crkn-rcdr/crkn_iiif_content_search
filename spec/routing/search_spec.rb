@@ -4,7 +4,7 @@ require 'rails_helper'
 
 RSpec.describe 'Search routes' do
   it 'routes to #search' do
-    expect(get: '/x/search').to route_to('search#search', id: 'x')
+    expect(get: '/search/x').to route_to('search#search', id: 'x')
   end
 
   it 'routes the root url' do

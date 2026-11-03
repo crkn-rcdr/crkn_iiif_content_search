@@ -14,6 +14,7 @@ class SearchController < ApplicationController
   private
 
   def load_search
+    params.require(:q)
     opts = params.permit(:q, :start, :canvas, :id).to_h.symbolize_keys
     @search = Search.new(opts.delete(:id), **opts)
   end
