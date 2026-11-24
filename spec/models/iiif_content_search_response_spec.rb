@@ -111,6 +111,39 @@ RSpec.describe IiifContentSearchResponse, type: :controller do
       expect(items.map { |i| i[:id] }.uniq.length).to eq 2
     end
 
+    it 'highlights multi-word phrases that wrap across a line break without duplicating annotations' do
+      multiline_text = "Barbara Smith spoke earlier.\nLater, Miss Barbara\nHoward won the race."
+      b_offset = multiline_text.index("Barbara\nHoward")
+      h_offset = multiline_text.index("Howard")
+      multiline_doc = {
+        doc_id => {
+          'id' => doc_id,
+          'ocrtext' => [multiline_text],
+          'ocrbbox' => [
+            JSON.generate(
+              'a' => [
+                0, 7, 10, 10, 50, 20,
+                b_offset, 7, 300, 100, 80, 22,
+                h_offset, 6, 40, 130, 75, 22
+              ]
+            )
+          ]
+        }
+      }
+      multiline_highlights = {
+        doc_id => ["Later, Miss <em>Barbara\nHoward</em> won the race."]
+      }
+      allow(search).to receive(:docs_by_id).and_return(multiline_doc)
+      allow(search).to receive(:highlights).and_return(multiline_highlights)
+
+      items = response.as_json[:items]
+      expect(items.length).to eq 2
+      expect(items.map { |i| i[:body][:value] }).to eq %w[Barbara Howard]
+      # Anchors to "Barbara\nHoward" (300,100), not the earlier unrelated "Barbara" (10,10)
+      expect(items[0][:target]).to include('#xywh=300,100,80,22')
+      expect(items[1][:target]).to include('#xywh=40,130,75,22')
+    end
+
     context 'with pagination' do
       it 'omits next link when on the last page' do
         expect(response.as_json).not_to have_key(:next)

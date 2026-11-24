@@ -13,7 +13,7 @@ class IiifContentSearchResponse
       "@context": "http://iiif.io/api/search/2/context.json",
       id: base_service_url,
       type: "AnnotationPage",
-      items: resources.flat_map(&:annotations),
+      items: annotations,
       next: next_page_url_if_needed
     }.compact
   end
@@ -33,11 +33,10 @@ class IiifContentSearchResponse
     "#{base_service_url}?start=#{search.start + search.rows}&q=#{URI.encode_www_form_component(search.q)}"
   end
 
-  def resources
-    return to_enum(:resources) unless block_given?
-
+  def annotations
     seen_ids = Set.new
-    docs = search.docs_by_id # <-- NEW
+    items = []
+    docs = search.docs_by_id
 
     search.highlights.each do |id, highlights|
       doc = docs[id]
@@ -45,17 +44,20 @@ class IiifContentSearchResponse
 
       highlights.each do |hl|
         cursor = 0
-        hl.to_enum(:scan, %r{<em>.*?</em>}).each do
-          resource = Resource.new(id, Regexp.last_match, doc, cursor)  # <-- pass doc and cursor
+        # Use /m so highlights wrapping across line breaks (e.g. <em>Barbara\nHoward</em>) match
+        hl.to_enum(:scan, %r{<em>.*?</em>}m).each do
+          resource = Resource.new(id, Regexp.last_match, doc, cursor)
           resource.annotations.each do |anno|
             next if seen_ids.include?(anno[:id])
             seen_ids.add(anno[:id])
-            yield resource
+            items << anno
           end
           cursor = resource.last_cursor if resource.last_cursor&.positive?
         end
       end
     end
+
+    items
   end
 
   def next_page?
@@ -135,6 +137,15 @@ class IiifContentSearchResponse
       words  = highlight.split(/\s+/).reject(&:blank?)
       out    = []
       cursor = @start_cursor || 0
+
+      # For multi-word highlights (e.g. "Barbara\nHoward"), anchor to the full phrase match
+      # so an unrelated earlier occurrence of the first word doesn't steal the highlight.
+      if words.length > 1
+        phrase_regex = Regexp.new(words.map { |w| Regexp.escape(w) }.join('\s+'))
+        phrase_idx = ocrtext.index(phrase_regex, cursor) || ocrtext.index(phrase_regex)
+        cursor = phrase_idx if phrase_idx
+      end
+
       words.each do |w|
         idx = ocrtext.index(w, cursor) || ocrtext.index(w) # fall back to first occurrence
         if idx

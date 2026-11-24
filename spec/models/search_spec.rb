@@ -89,6 +89,10 @@ RSpec.describe Search do
       expect(params['hl.fl']).to eq 'ocrtext'
       expect(params['hl.requireFieldMatch']).to be(false)
     end
+
+    it 'enforces exact phrase matching (qs=0) for user-quoted phrases' do
+      expect(params[:qs]).to eq 0
+    end
   end
 
   describe '#num_found' do

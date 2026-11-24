@@ -70,6 +70,7 @@ class Search
   def highlight_request_params
     {
       fq: highlight_filters,
+      qs: 0,
       rows: rows,
       start: start,
       fl: 'id,canvas_index,ocrtext,ocrbbox,score',
